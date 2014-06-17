@@ -18,7 +18,7 @@
   "homepage": "https://github.com/open-app/domain-service",
   "devDependencies": {
     "chai": "^1.9.1",
-    "level": "^0.18.0",
+    "level-test": "^1.6.3",
     "mocha": "^1.20.1",
     "open-app-person-domain": "git://github.com/open-app/person-domain"
   },

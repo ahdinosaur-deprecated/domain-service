@@ -1,14 +1,16 @@
 var expect = require('chai').expect;
 
 var feathers = require('feathers');
-var level = require('level');
-var db = level('testdb');
+var level = require('level-test')();
+
+var db;
 
 var PersonDomain;
 var Person;
 
 describe("#PersonService", function () {
   before(function () {
+    db = level('testdb', { encoding: 'json' });
     var service = require('../')
     PersonDomain = require('open-app-person-domain')({
       db: db,
@@ -37,5 +39,9 @@ describe("#PersonService", function () {
 
       done();
     });
+  });
+
+  after(function (done) {
+    db.close(done);
   });
 });
