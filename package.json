@@ -1,0 +1,31 @@
+{
+  "name": "open-app-domain-service",
+  "version": "0.1.0",
+  "description": "create feathers service from open-app data domain",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "mocha --recursive test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/open-app/domain-service.git"
+  },
+  "author": "open-app",
+  "license": "AGPLv3",
+  "bugs": {
+    "url": "https://github.com/open-app/domain-service/issues"
+  },
+  "homepage": "https://github.com/open-app/domain-service",
+  "devDependencies": {
+    "chai": "^1.9.1",
+    "level": "^0.18.0",
+    "mocha": "^1.20.1",
+    "open-app-person-domain": "git://github.com/open-app/person-domain"
+  },
+  "dependencies": {
+    "feathers": "^1.0.0-pre.5",
+    "jsonld": "^0.2.13",
+    "lodash": "^2.4.1",
+    "uberproto": "^1.1.2"
+  }
+}
