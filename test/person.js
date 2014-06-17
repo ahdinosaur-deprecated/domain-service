@@ -1,22 +1,31 @@
 var expect = require('chai').expect;
-
+var request = require('supertest');
+var bluebird = require('bluebird');
 var feathers = require('feathers');
 var level = require('level-test')();
-
-var db;
-
-var PersonDomain;
-var Person;
+var _ = require('lodash');
+require('longjohn');
 
 describe("#PersonService", function () {
+  var app, db;
+  var Person;
+
   before(function () {
     db = level('testdb', { encoding: 'json' });
-    var service = require('../')
-    PersonDomain = require('open-app-person-domain')({
+
+    Person = require('open-app-person-domain')({
       db: db,
-      name: "person",
+      name: "people",
     });
-    Person = service(PersonDomain);
+
+    app = feathers()
+      .configure(feathers.rest())
+      .configure(require('../')())
+      .use(require('body-parser')())
+      .domain(Person)
+    ;
+
+    request = request(app);
   });
 
   it("should create Person", function (done) {
@@ -24,10 +33,18 @@ describe("#PersonService", function () {
       name: "Bob Loblaw",
       email: "bobloblawslawblog.com",
     };
-    Person.create(person, {}, function (err, aPerson) {
+
+    request
+    .post("/people")
+    .send(person)
+    .expect("Content-Type", /json/)
+    .expect(201)
+    .end(function (err, res) {
       expect(err).to.not.exist;
 
-      expect(aPerson["@context"]).to.deep.equal(PersonDomain.context);
+      var aPerson = res.body;
+
+      expect(aPerson["@context"]).to.deep.equal(Person.context);
       expect(aPerson).to.have.property("id");
       expect(aPerson).to.have.property("type", "schema:Person");
 

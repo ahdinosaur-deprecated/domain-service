@@ -1,30 +1,41 @@
 var expect = require('chai').expect;
+var request = require('supertest');
 var bluebird = require('bluebird');
 var feathers = require('feathers');
 var level = require('level-test')();
 var _ = require('lodash');
-
-var db;
-
-var CircleDomain;
-var Circle;
+require('longjohn');
 
 describe("#CircleService", function () {
+  var app, db;
+  var Person, Circle;
+
   before(function () {
     db = level('testdb', { encoding: 'json' });
-    var service = require('../')
-    require('open-app-person-domain')({
+
+    Person = require('open-app-person-domain')({
       db: db,
-      name: "person",
+      name: "people",
     });
-    CircleDomain = require('open-app-circle-domain')({
+
+    Circle = require('open-app-circle-domain')({
       db: db,
-      name: "circle",
+      name: "circles",
     });
-    Circle = service(CircleDomain);
+
+    app = feathers()
+      .configure(feathers.rest())
+      .configure(require('../')())
+      .use(require('body-parser')())
+      .domain(Person)
+      .domain(Circle)
+    ;
+
+    request = request(app);
   });
 
   it("should create Circle", function (done) {
+
     var people = [{
       name: "Athos",
     }, {
@@ -32,20 +43,31 @@ describe("#CircleService", function () {
     }, {
       name: "Porthos",
     }];
+
     var circle = {
       name: "The Three Musketeers",
       description: "all for one, one for all",
       member: people,
     };
-    Circle.create(circle, {}, function (err, aCircle) {
+
+    request
+    .post("/circles")
+    .send(circle)
+    .expect("Content-Type", /json/)
+    .expect(201)
+    .end(function (err, res) {
       expect(err).to.not.exist;
 
-      expect(aCircle["@context"]).to.deep.equal(CircleDomain.context);
+      var aCircle = res.body;
+
+      expect(aCircle["@context"]).to.deep.equal(Circle.context);
       expect(aCircle).to.have.property("id");
       expect(aCircle).to.have.property("type", "schema:Organization");
 
       expect(_.pluck(aCircle.member, 'name'))
         .to.include.members(_.pluck(people, 'name'));
+
+      var id = aCircle.id;
 
       delete aCircle['@context'];
       delete aCircle.id;
@@ -57,8 +79,16 @@ describe("#CircleService", function () {
       var newMember = {
         name: "d'Artagnan",
       };
-      Circle.members.create(newMember, {}, function (err, bCircle) {
+
+      request
+      .post("/circles/" + id + "/members")
+      .send(newMember)
+      .expect("Content-Type", /json/)
+      .expect(201)
+      .end(function (err, res) {
         expect(err).to.not.exist;
+
+        var bCircle = res.body;
 
         expect(_.pluck(bCircle.member, 'name'))
           .to.include.members(_.pluck(people.concat([newMember]), 'name'));
