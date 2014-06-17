@@ -26,9 +26,11 @@ describe("#PersonService", function () {
       expect(err).to.not.exist;
 
       expect(aPerson["@context"]).to.deep.equal(PersonDomain.context);
+      expect(aPerson).to.have.property("id");
       expect(aPerson).to.have.property("type", "schema:Person");
 
       delete aPerson['@context'];
+      delete aPerson.id;
       delete aPerson.type;
 
       expect(aPerson).to.deep.equal(person);
