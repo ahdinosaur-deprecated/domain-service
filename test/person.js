@@ -28,6 +28,8 @@ describe("#PersonService", function () {
       expect(aPerson["@context"]).to.deep.equal(PersonDomain.context);
       expect(aPerson).to.have.property("type", "schema:Person");
 
+      console.log('aPerson', aPerson);
+
       delete aPerson['@context'];
       delete aPerson.type;
 
@@ -36,4 +38,15 @@ describe("#PersonService", function () {
       done();
     });
   });
+
+  it("should get a Person", function (done) {
+
+
+
+
+    done()
+  })
+
+
+
 });
