@@ -20,20 +20,21 @@ create [feathers](http://feathersjs.com) from open-app data domain
 ### use
 
 ```javascript
+
 var feathers = require('feathers');
 var level = require('level');
-var db = level('db');
-
-var service = require('domain-service')
+var db = level('db', { encoding: 'json' });
 
 var Person = require('open-app-person-domain')({
   db: db,
-  name: "person",
+  name: "people",
 });
 
 var app = feathers()
-  .use(require('body-parser'))
-  .use(service(Person))
+  .configure(feathers.rest())
+  .configure(require('domain-service')())
+  .use(require('body-parser')())
+  .domain(Person)
 ;
 ```
 
