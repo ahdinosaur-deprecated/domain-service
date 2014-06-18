@@ -59,7 +59,6 @@ describe("#PersonService", function () {
     });
   });
 
-
   it("should get all Persons", function (done) {
 
     var person = {
@@ -115,9 +114,7 @@ describe("#PersonService", function () {
         done();
       });
     });
-
-
-  })
+  });
 
   it("should update a person", function (done) {
 
@@ -158,7 +155,6 @@ describe("#PersonService", function () {
     });
   });
 
-
   it("should delete a person", function (done) {
 
     var person = {
@@ -181,9 +177,6 @@ describe("#PersonService", function () {
         done();
      });
     })
-
-
-
   });
 
   afterEach(function (done) {
@@ -196,10 +189,8 @@ describe("#PersonService", function () {
       });
   });
 
-
   after(function (done) {
     db.close(done);
   });
-
 
 });
