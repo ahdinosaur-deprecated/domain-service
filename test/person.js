@@ -23,8 +23,6 @@ describe("#PersonService", function () {
       .configure(require('../')())
       .use(require('body-parser')())
       .domain(Person)
-      .setup(require('../')())
-      .configure(feathers.errors())
     ;
 
     request = request(app);
@@ -50,8 +48,6 @@ describe("#PersonService", function () {
       expect(aPerson["@context"]).to.deep.equal(Person.context);
       expect(aPerson).to.have.property("id");
       expect(aPerson).to.have.property("type", "schema:Person");
-
-      console.log('aPerson', aPerson);
 
       delete aPerson['@context'];
       delete aPerson.id;
@@ -105,7 +101,6 @@ describe("#PersonService", function () {
       .end(function (err, res) {
         expect(err).to.not.exist;
         var thePerson = res.body;
-        console.log('theperson', thePerson);
 
         expect(thePerson["@context"]).to.deep.equal(Person.context);
         expect(thePerson).to.have.property("id");
@@ -148,8 +143,6 @@ describe("#PersonService", function () {
 
         var updatedPerson = res.body;
 
-        console.log('updatedPerson', updatedPerson);
-
         expect(updatedPerson["@context"]).to.deep.equal(Person.context);
         expect(updatedPerson).to.have.property("id");
         expect(updatedPerson).to.have.property("type", "schema:Person");      
@@ -181,9 +174,7 @@ describe("#PersonService", function () {
       .expect(200)
       .end(function (err, res) {
         expect(err).to.not.exist;
-
         var body = res.body;
-        console.log('deleted', body);
 
         expect(body).to.deep.equal({msg: "people!0000000001 deleted"})
 
