@@ -23,6 +23,7 @@ describe("#PersonService", function () {
       .configure(require('../')())
       .use(require('body-parser')())
       .domain(Person)
+      .setup()
     ;
 
     request = request(app);
@@ -76,7 +77,6 @@ describe("#PersonService", function () {
       .end(function (err, res) {
         expect(err).to.not.exist;
         var people = res.body;
-        console.log('people', people)
         expect(people).to.have.length(1);
         done();
       });
@@ -94,8 +94,11 @@ describe("#PersonService", function () {
     var stooge = Person.create(person);
 
     stooge.save(function (err) {
+
+      var id = stooge.key;
+
       request
-      .get("/people/" + "people!0000000001")
+      .get("/people/" + id)
       .expect(200)
       .end(function (err, res) {
         expect(err).to.not.exist;
@@ -131,8 +134,11 @@ describe("#PersonService", function () {
     var stooge = Person.create(person);
 
     stooge.save(function (err) {
+
+      var id = stooge.key;
+
       request
-      .put("/people/" + "people!0000000001")
+      .put("/people/" + id)
       .send(newData)
       .expect(200)
       .end(function (err, res) {
@@ -165,16 +171,26 @@ describe("#PersonService", function () {
     var stooge = Person.create(person);
 
     stooge.save(function (err) {
+
+      var id = stooge.key;
+
       request
-      .delete("/people/" + "people!0000000001")
-      .expect(200)
+      .delete("/people/" + id)
+      .expect(204)
       .end(function (err, res) {
         expect(err).to.not.exist;
         var body = res.body;
 
-        expect(body).to.deep.equal({msg: "people!0000000001 deleted"})
+        var msg = id + " deleted";
 
-        done();
+        expect(body).to.deep.equal({msg: msg})
+
+        Person.get(id, function (err, model) {
+          expect(err).to.exist;
+          done();
+        });
+
+        
      });
     })
   });
