@@ -13,6 +13,7 @@ describe("#CircleService", function () {
   var app, db;
   var Person, Circle;
   var people, threeMusketeers;
+  var saveCircle;
 
   before(function () {
     db = level('testdb', { encoding: 'json' });
@@ -41,7 +42,30 @@ describe("#CircleService", function () {
         name: "The Three Musketeers",
         description: "all for one, one for all",
         member: people,
-    };    
+    };
+
+    saveCircle = function (circle) {
+      var dbCircle;
+      return Promise.map(circle.member, function (member) {
+        var dbPerson = Person.create(member);
+        dbPerson = Promise.promisifyAll(dbPerson);
+        return dbPerson.saveAsync()
+        .then(function () {
+          return dbPerson;
+        });
+      })
+      .then(function (members) {
+        var memberIds = _.pluck(members, 'id');
+        circle.member = memberIds;
+        dbCircle = Circle.create(circle);
+        dbCircle = Promise.promisifyAll(dbCircle);
+        return dbCircle.saveAsync();
+      })
+      .then(function () {
+        return dbCircle;
+      });
+    };
+
 
     app = feathers()
       .configure(feathers.rest())
@@ -90,17 +114,19 @@ describe("#CircleService", function () {
   });
 
   it("should add a new member to a circle", function () {
+    var newMember, newMembers;
+    var dbCircle;
 
     // save a group in the db
-    var dbCircle = Promise.promisifyAll(Circle.create(threeMusketeers));
-    return dbCircle.saveAsync()
-    .then(function () {
-      var id = dbCircle.key;
+    return saveCircle(threeMusketeers)
+    .then(function (circle) {
+      dbCircle = circle;
+      var id = circle.key;
       // create new member
-      var newMember = {
+      newMember = {
         name: "d'Artagnan",
       };
-      var newMembers = people.concat([newMember]);
+      newMembers = people.concat([newMember]);
 
       // post new circle member with API
       return request
@@ -115,20 +141,18 @@ describe("#CircleService", function () {
       expect(_.pluck(aCircle.member, 'name'))
         .to.include.members(_.pluck(newMembers, 'name'));
 
-      // check db
+      // TODO check db with a fresh get
       expect(_.pluck(dbCircle.member, 'name'))
         .to.include.members(_.pluck(newMembers, 'name'));
     });
   });
 
-
   it("should remove a member from a circle", function () {
     var circleId, memberId;
 
     // save a circle in the db
-    var dbCircle = Promise.promisifyAll(Circle.create(threeMusketeers));
-    return dbCircle.saveAsync()
-    .then(function () {
+    return saveCircle(threeMusketeers)
+    .then(function (dbCircle) {
       // store circle info
       circleId = dbCircle.key;
       memberId = dbCircle.member[0].key;
@@ -154,9 +178,8 @@ describe("#CircleService", function () {
   it("should read all circles", function () {
 
     // save a circle in the db
-    var dbCircle = Promise.promisifyAll(Circle.create(threeMusketeers));
-    return dbCircle.saveAsync()
-    .then(function () {
+    return saveCircle(threeMusketeers)
+    .then(function (dbCircle) {
       // get all circles with API
       return request
       .get("/circles")
@@ -193,9 +216,8 @@ describe("#CircleService", function () {
     it("should get a circle", function () {
 
     // put a circle in the db
-    var dbCircle = Promise.promisifyAll(Circle.create(threeMusketeers));
-    return dbCircle.saveAsync()
-    .then(function () {
+    return saveCircle(threeMusketeers)
+    .then(function (dbCircle) {
       var id = dbCircle.key;
       // get circle from API
       return request
@@ -233,9 +255,8 @@ describe("#CircleService", function () {
     };
 
     // put a circle in the db
-    var dbCircle = Promise.promisifyAll(Circle.create(threeMusketeers));
-    return dbCircle.saveAsync()
-    .then(function () {
+    return saveCircle(threeMusketeers)
+    .then(function (dbCircle) {
       var id = dbCircle.key;
       // update circle with API
       return request
@@ -259,13 +280,13 @@ describe("#CircleService", function () {
     });
   });
 
-    it("should delete a circle", function () {
+  it("should delete a circle", function () {
+    var id;
 
     // put a circle in the db
-    var dbCircle = Promise.promisifyAll(Circle.create(threeMusketeers));
-    return dbCircle.saveAsync()
-    .then(function () {
-      var id = dbCircle.key;
+    return saveCircle(threeMusketeers)
+    .then(function (dbCircle) {
+      id = dbCircle.key;
       // delete circle with id
       return request
       .delete("/circles/" + id)
@@ -284,9 +305,8 @@ describe("#CircleService", function () {
     var circleId;
 
     // put a circle in the db
-    var dbCircle = Promise.promisifyAll(Circle.create(threeMusketeers));
-    return dbCircle.saveAsync()
-    .then(function () {
+    return saveCircle(threeMusketeers)
+    .then(function (dbCircle) {
       circleId = dbCircle.key;
       var personId = dbCircle.member[0].key;
 
@@ -307,9 +327,8 @@ describe("#CircleService", function () {
   it("should read members of a circle", function () {
 
     // put a circle in the db
-    var dbCircle = Promise.promisifyAll(Circle.create(threeMusketeers));
-    return dbCircle.saveAsync()
-    .then(function () {
+    return saveCircle(threeMusketeers)
+    .then(function (dbCircle) {
       var circleId = dbCircle.key;
       // get members of circle with API
       return request
@@ -334,14 +353,11 @@ describe("#CircleService", function () {
     });
   });
 
-  afterEach(function (done) {
-    db.createKeyStream()
-      .on('data', function (k) {
-        db.del(k) 
-      })
-      .on('close', function () {
-        done();
-      });
+  afterEach(function () {
+    return Promise.all([
+      Person.wipeAsync(),
+      Circle.wipeAsync(),
+    ])
   });
 
   after(function (done) {
