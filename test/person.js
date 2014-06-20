@@ -1,4 +1,6 @@
-var expect = require('chai').expect;
+var chai = require('chai');
+chai.use(require('chai-as-promised'));
+var expect = chai.expect;
 var request = require('supertest-as-promised');
 var Promise = require('bluebird');
 var feathers = require('feathers');
@@ -16,7 +18,6 @@ describe("#PersonService", function () {
 
     Person = require('open-app-person-domain')({
       db: db,
-      name: "people",
     });
     Person = Promise.promisifyAll(Person);
 
@@ -164,10 +165,8 @@ describe("#PersonService", function () {
       var body = res.body;
       expect(body).to.not.exist;
 
-      return Person.getAsync(stooge.key)
-    })
-    .catch(errors.NotFound, function (err) {
-      expect(err).to.exist;
+      var get = Person.getAsync(stooge.key);
+      expect(get).to.be.rejectedWith(errors.NotFound);
     });
   });
 
