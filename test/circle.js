@@ -231,6 +231,7 @@ describe("#CircleService", function () {
         delete aCircle.type;
 
         Promise.map(aCircle.member, function (member) {
+          expect(member).to.have.property('id');
           delete member['id'];
           return member
         })
@@ -261,7 +262,7 @@ describe("#CircleService", function () {
       .put("/circles/" + id)
       .send(newData)
       .expect("Content-Type", /json/)
-      .expect(200)
+      .expect(201)
       .end(function (err, res) {
         expect(err).to.not.exist;  
 
@@ -309,6 +310,69 @@ describe("#CircleService", function () {
       });
     });
   });
+
+
+  it("should find circles that contain a person", function (done) {
+
+    // put a group in the db, ready for testing
+    dbCircle =  Circle.create(threeMusketeers);
+
+    dbCircle.save(function (err) {
+
+      var circleId = dbCircle.key;
+      var personId = dbCircle.member[0].key;
+
+      //test api
+      request
+      .get("/circles?member=" + urlencode(personId))
+      .expect("Content-Type", /json/)
+      .expect(200)
+      .end(function (err, res) {
+        expect(err).to.not.exist;  
+
+        var circles = res.body;
+        var aCircle = circles[0];
+        expect(circles).to.have.length(1);
+        expect(aCircle).to.have.property('id').that.equals(circleId);
+
+        done();
+      });
+    });
+  });
+
+  it("should read members of a circle", function (done) {
+
+    // put a group in the db, ready for testing
+    dbCircle =  Circle.create(threeMusketeers);
+
+    dbCircle.save(function (err) {
+
+      var circleId = dbCircle.key;
+
+      //test api
+      request
+      .get("/circles/" + urlencode(circleId) + "/member")
+      .expect("Content-Type", /json/)
+      .expect(200)
+      .end(function (err, res) {
+        expect(err).to.not.exist;  
+
+        var members = res.body;
+
+        expect(members).to.have.length(3);
+
+        Promise.map(members, function (member) {
+          expect(member).to.have.property('id');
+          delete member['id'];
+          return member
+        })
+        .then(function () {
+          expect(members).to.deep.equal(people);
+          done();
+        });
+      });
+    });
+  })  
 
   afterEach(function (done) {
     db.createKeyStream()
