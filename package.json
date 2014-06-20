@@ -32,6 +32,7 @@
     "mocha": "^1.20.1",
     "open-app-circle-domain": "^0.1.0",
     "open-app-person-domain": "^0.1.0",
-    "supertest": "^0.13.0"
+    "supertest": "^0.13.0",
+    "supertest-as-promised": "^0.1.1"
   }
 }
