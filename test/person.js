@@ -100,7 +100,7 @@ describe("#PersonService", function () {
 
       expect(thePerson["@context"]).to.deep.equal(Person.context);
       expect(thePerson).to.have.property("id");
-      expect(thePerson).to.have.property("type", "schema:Person");      
+      expect(thePerson).to.have.property("type", "Person");      
      
       delete thePerson['@context'];
       delete thePerson.id;
@@ -136,7 +136,7 @@ describe("#PersonService", function () {
 
       expect(updatedPerson["@context"]).to.deep.equal(Person.context);
       expect(updatedPerson).to.have.property("id");
-      expect(updatedPerson).to.have.property("type", "schema:Person");      
+      expect(updatedPerson).to.have.property("type", "Person");      
      
       delete updatedPerson['@context'];
       delete updatedPerson.id;
