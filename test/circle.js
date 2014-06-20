@@ -171,7 +171,7 @@ describe("#CircleService", function () {
 
       expect(aCircle["@context"]).to.deep.equal(Circle.context);
       expect(aCircle).to.have.property("id");
-      expect(aCircle).to.have.property("type", "schema:Organization");
+      expect(aCircle).to.have.property("type", "Circle");
 
       delete aCircle['@context'];
       delete aCircle.id;
@@ -208,7 +208,7 @@ describe("#CircleService", function () {
 
       expect(aCircle["@context"]).to.deep.equal(Circle.context);
       expect(aCircle).to.have.property("id");
-      expect(aCircle).to.have.property("type", "schema:Organization");
+      expect(aCircle).to.have.property("type", "Circle");
 
       delete aCircle['@context'];
       delete aCircle.id;
@@ -249,7 +249,7 @@ describe("#CircleService", function () {
 
       expect(updatedCircle["@context"]).to.deep.equal(Circle.context);
       expect(updatedCircle).to.have.property("id");
-      expect(updatedCircle).to.have.property("type", "schema:Organization");
+      expect(updatedCircle).to.have.property("type", "Circle");
 
       delete updatedCircle['@context'];
       delete updatedCircle.id;
