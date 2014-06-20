@@ -154,17 +154,15 @@ describe("#PersonService", function () {
     }; 
 
     var stooge = Promise.promisifyAll(Person.create(person));
-
     return stooge.saveAsync()
     .then(function () {
+      // delete person with API
       return request
       .delete("/people/" + stooge.key)
       .expect(204)
     })
     .then(function (res) {
-      var body = res.body;
-      expect(body).to.not.exist;
-
+      // get deleted person
       var get = Person.getAsync(stooge.key);
       expect(get).to.be.rejectedWith(errors.NotFound);
     });
