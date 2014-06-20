@@ -48,7 +48,7 @@ describe("#PersonService", function () {
 
       expect(aPerson["@context"]).to.deep.equal(Person.context);
       expect(aPerson).to.have.property("id");
-      expect(aPerson).to.have.property("type", "schema:Person");
+      expect(aPerson).to.have.property("type", "Person");
 
       delete aPerson['@context'];
       delete aPerson.id;

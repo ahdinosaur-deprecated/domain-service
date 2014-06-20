@@ -67,8 +67,11 @@ describe("#CircleService", function () {
 
       expect(aCircle["@context"]).to.deep.equal(Circle.context);
       expect(aCircle).to.have.property("id");
-      expect(aCircle).to.have.property("type", "schema:Organization");
       expect(aCircle).to.have.property("name").that.equals(threeMusketeers.name);
+      expect(aCircle).to.have.property("type", "Circle");
+
+      expect(_.pluck(aCircle.member, 'name'))
+        .to.include.members(_.pluck(people, 'name'));
 
       delete aCircle['@context'];
       delete aCircle.id;
