@@ -83,7 +83,7 @@ describe("#CircleService", function () {
         return member; 
       })
       .then(function (members) {
-        expect(members).to.have.length.that.equals(people.length);
+        expect(members).to.have.length(people.length);
         expect(members).to.deep.include.members(people);
       });
     });
@@ -167,7 +167,7 @@ describe("#CircleService", function () {
       var circles = res.body;
       var aCircle = circles[0];
 
-      expect(circles).length.to.equal(1)
+      expect(circles).to.have.length(1)
 
       expect(aCircle["@context"]).to.deep.equal(Circle.context);
       expect(aCircle).to.have.property("id");
