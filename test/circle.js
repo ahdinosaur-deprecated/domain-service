@@ -322,7 +322,8 @@ describe("#CircleService", function () {
 
       expect(members).to.have.length(3);
 
-      Promise.map(members, function (member) {
+      // TODO this test will not pass
+      return Promise.map(members, function (member) {
         expect(member).to.have.property('id');
         delete member['id'];
         return member
@@ -341,8 +342,7 @@ describe("#CircleService", function () {
       .on('close', function () {
         done();
       });
-  });  
-
+  });
 
   after(function (done) {
     db.close(done);
