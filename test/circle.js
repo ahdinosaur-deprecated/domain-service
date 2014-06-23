@@ -264,7 +264,7 @@ describe("#CircleService", function () {
       .put("/circles/" + id)
       .send(newData)
       .expect("Content-Type", /json/)
-      .expect(201);
+      .expect(200);
     })
     .then(function (res) {
       var updatedCircle = res.body;
