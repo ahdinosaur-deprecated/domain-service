@@ -46,6 +46,7 @@ describe("#CircleService", function () {
 
     saveCircle = function (circle) {
       var dbCircle;
+      circle = _.clone(circle);
       return Promise.map(circle.member, function (member) {
         var dbPerson = Person.create(member);
         dbPerson = Promise.promisifyAll(dbPerson);
