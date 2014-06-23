@@ -1,7 +1,10 @@
-var expect = require('chai').expect;
-var request = require('supertest');
-var bluebird = require('bluebird');
+var chai = require('chai');
+chai.use(require('chai-as-promised'));
+var expect = chai.expect;
+var request = require('supertest-as-promised');
+var Promise = require('bluebird');
 var feathers = require('feathers');
+var errors = feathers.errors.types;
 var level = require('level-test')();
 var _ = require('lodash');
 require('longjohn');
@@ -15,108 +18,99 @@ describe("#PersonService", function () {
 
     Person = require('open-app-person-domain')({
       db: db,
-      name: "people",
     });
+    Person = Promise.promisifyAll(Person);
 
     app = feathers()
       .configure(feathers.rest())
       .configure(require('../')())
       .use(require('body-parser')())
       .domain(Person)
+      .setup()
     ;
 
     request = request(app);
   });
 
-  it("should create Person", function (done) {
+  it("should create Person", function () {
     var person = {
       name: "Bob Loblaw",
       email: "bobloblawslawblog.com",
     };
 
-    request
+    return request
     .post("/people")
     .send(person)
     .expect("Content-Type", /json/)
     .expect(201)
-    .end(function (err, res) {
-
-      expect(err).to.not.exist;
-
+    .then(function (res) {
       var aPerson = res.body;
 
       expect(aPerson["@context"]).to.deep.equal(Person.context);
       expect(aPerson).to.have.property("id");
-      expect(aPerson).to.have.property("type", "schema:Person");
+      expect(aPerson).to.have.property("type", "Person");
 
       delete aPerson['@context'];
       delete aPerson.id;
       delete aPerson.type;
 
       expect(aPerson).to.deep.equal(person);
-
-      done();
     });
   });
 
-  it("should get all Persons", function (done) {
+  it("should get all Persons", function () {
 
     var person = {
       name: "Bob Loblaw",
       email: "bobloblawslawblog.com",
     };
 
-    var stooge = Person.create(person);
+    var stooge = Promise.promisifyAll(Person.create(person));
 
-    stooge.save(function (err) {
-      request
+    return stooge.saveAsync()
+    .then(function () {
+      return request
       .get("/people")
       .expect("Content-Type", /json/)
       .expect(200)
-      .end(function (err, res) {
-        expect(err).to.not.exist;
-        var people = res.body;
-        console.log('people', people)
-        expect(people).to.have.length(1);
-        done();
-      });
+    })
+    .then(function (res) {
+      var people = res.body;
+      expect(people).to.have.length(1);
     });
-
   });
 
-  it("should get a person", function (done) {
+  it("should get a person", function () {
 
     var person = {
       name: "Bob Loblaw",
       email: "bobloblawslawblog.com",
     };
 
-    var stooge = Person.create(person);
+    var stooge = Promise.promisifyAll(Person.create(person));
 
-    stooge.save(function (err) {
-      request
-      .get("/people/" + "people!0000000001")
-      .expect(200)
-      .end(function (err, res) {
-        expect(err).to.not.exist;
-        var thePerson = res.body;
+    stooge.saveAsync()
+    .then(function () {
+      return request
+      .get("/people/" + stooge.key)
+      .expect(200);
+    })
+    .then(function (res) {
+      var thePerson = res.body;
 
-        expect(thePerson["@context"]).to.deep.equal(Person.context);
-        expect(thePerson).to.have.property("id");
-        expect(thePerson).to.have.property("type", "schema:Person");      
-       
-        delete thePerson['@context'];
-        delete thePerson.id;
-        delete thePerson.type;
+      expect(thePerson["@context"]).to.deep.equal(Person.context);
+      expect(thePerson).to.have.property("id");
+      expect(thePerson).to.have.property("type", "Person");      
+     
+      delete thePerson['@context'];
+      delete thePerson.id;
+      delete thePerson.type;
 
-        expect(thePerson).to.deep.equal(person);
-
-        done();
-      });
+      expect(thePerson).to.deep.equal(person);
     });
   });
 
-  it("should update a person", function (done) {
+  it("should update a person", function () {
 
     var person = {
       name: "Bob Loblaw",
@@ -128,55 +122,50 @@ describe("#PersonService", function () {
       email: "bobsnewemail@email.com",
     };
 
-    var stooge = Person.create(person);
+    var stooge = Promise.promisifyAll(Person.create(person));
 
-    stooge.save(function (err) {
-      request
-      .put("/people/" + "people!0000000001")
+    return stooge.saveAsync()
+    .then(function () {
+      return request
+      .put("/people/" + stooge.key)
       .send(newData)
-      .expect(200)
-      .end(function (err, res) {
-        expect(err).to.not.exist;
+      .expect(200);
+    })
+    .then(function (res) {
+      var updatedPerson = res.body;
 
-        var updatedPerson = res.body;
+      expect(updatedPerson["@context"]).to.deep.equal(Person.context);
+      expect(updatedPerson).to.have.property("id");
+      expect(updatedPerson).to.have.property("type", "Person");      
+     
+      delete updatedPerson['@context'];
+      delete updatedPerson.id;
+      delete updatedPerson.type;
 
-        expect(updatedPerson["@context"]).to.deep.equal(Person.context);
-        expect(updatedPerson).to.have.property("id");
-        expect(updatedPerson).to.have.property("type", "schema:Person");      
-       
-        delete updatedPerson['@context'];
-        delete updatedPerson.id;
-        delete updatedPerson.type;
-
-        expect(updatedPerson).to.deep.equal(newData);
-
-        done();
-      });
+      expect(updatedPerson).to.deep.equal(newData);
     });
   });
 
-  it("should delete a person", function (done) {
+  it("should delete a person", function () {
 
     var person = {
       name: "Bob Loblaw",
       email: "bobloblawslawblog.com",
     }; 
 
-    var stooge = Person.create(person);
-
-    stooge.save(function (err) {
-      request
-      .delete("/people/" + "people!0000000001")
-      .expect(200)
-      .end(function (err, res) {
-        expect(err).to.not.exist;
-        var body = res.body;
-
-        expect(body).to.deep.equal({msg: "people!0000000001 deleted"})
-
-        done();
-     });
+    var stooge = Promise.promisifyAll(Person.create(person));
+    return stooge.saveAsync()
+    .then(function () {
+      // delete person with API
+      return request
+      .delete("/people/" + stooge.key)
+      .expect(204)
     })
+    .then(function (res) {
+      // get deleted person
+      var get = Person.getAsync(stooge.key);
+      expect(get).to.be.rejectedWith(errors.NotFound);
+    });
   });
 
   afterEach(function (done) {
@@ -192,5 +181,4 @@ describe("#PersonService", function () {
   after(function (done) {
     db.close(done);
   });
-
 });
