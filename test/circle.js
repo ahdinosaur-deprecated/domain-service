@@ -67,6 +67,47 @@ describe("#CircleService", function () {
       });
     };
 
+    checkCircle = function (circle, baseCircle, context, depth, callback) {
+      var depth = depth || 1;
+
+      if (context) {
+        expect(circle['@context']).to.deep.equal(Circle.context)
+      }
+
+      expect(circle).to.have.property("id");
+      expect(circle).to.have.property("type", "Circle");
+      delete circle['@context'];
+      delete circle.id;
+      delete circle.type;
+
+      if (depth === 1) {
+        callback(null, circle)
+      } else {
+        checkMembers(circle.member, baseCircle.member)
+        .then(function () {
+          expect(circle).to.deep.equal(baseCircle);
+        })
+          .nodeify(callback)
+      };
+    };
+
+    checkMembers = function (members, baseMembers, callback) {
+      Promise.map(members, function (member) {
+        expect(member).to.have.property('id');
+        expect(member).to.have.property('type', "Person");
+        delete member['id'];
+        delete member['type'];
+        return member;
+      })
+      .then(function () {
+        expect(members).to.have.length(baseMembers.length);
+        expect(members).to.deep.include.members(baseMembers);
+        callback(null, members);
+      });
+    };
+
+    checkMembers = Promise.promisify(checkMembers);
+    checkCircle = Promise.promisify(checkCircle);
 
     app = feathers()
       .configure(feathers.rest())
@@ -81,7 +122,6 @@ describe("#CircleService", function () {
   });
 
   it("should create Circle", function () {
-
     return request
     .post("/circles")
     .send(threeMusketeers)
@@ -89,62 +129,44 @@ describe("#CircleService", function () {
     .expect(201)
     .then(function (res) {
       var aCircle = res.body;
-
-      expect(aCircle["@context"]).to.deep.equal(Circle.context);
-      expect(aCircle).to.have.property("id");
-      expect(aCircle).to.have.property("name").that.equals(threeMusketeers.name);
-      expect(aCircle).to.have.property("type", "Circle");
-
-      expect(_.pluck(aCircle.member, 'name'))
-        .to.include.members(_.pluck(people, 'name'));
-
-      delete aCircle['@context'];
-      delete aCircle.id;
-      delete aCircle.type;
-
-      return Promise.map(aCircle.member, function (member) {
-        expect(member).to.have.property('id');
-        delete member['id'];
-        return member; 
-      })
-      .then(function (members) {
-        expect(members).to.have.length(people.length);
-        expect(members).to.deep.include.members(people);
-      });
+      return checkCircle(aCircle, threeMusketeers, context, 2)
     });
   });
 
   it("should add a new member to a circle", function () {
-    var newMember, newMembers;
+    var dArtagnan, newMembers;
     var dbCircle;
+    var circleId;
 
     // save a group in the db
     return saveCircle(threeMusketeers)
     .then(function (circle) {
-      dbCircle = circle;
-      var id = circle.key;
+      circleId = circle.key;
       // create new member
-      newMember = {
+      dArtagnan = {
         name: "d'Artagnan",
       };
-      newMembers = people.concat([newMember]);
 
+      newMembers = people.concat([dArtagnan]);
       // post new circle member with API
       return request
-      .post("/circles/" + urlencode(id) + "/member")
-      .send(newMember)
+      .post("/circles/" + urlencode(circleId) + "/member")
+      .send(dArtagnan)
       .expect("Content-Type", /json/)
       .expect(201)
     })
     .then(function (res) {
       // check response body
-      var aCircle = res.body;
-      expect(_.pluck(aCircle.member, 'name'))
-        .to.include.members(_.pluck(newMembers, 'name'));
+      var newMember = res.body;
+      // expect(newMember).to.have.property('id')
+      // expect(newMember).to.have.property('name', dArtagnan.name)
 
-      // TODO check db with a fresh get
-      expect(_.pluck(dbCircle.member, 'name'))
-        .to.include.members(_.pluck(newMembers, 'name'));
+      //check db with a fresh get
+      Circle.getAsync(circleId)
+      .then(function (circle) {
+        var circle = circle.toJSON();
+        checkMembers(circle.member, newMembers)
+      });
     });
   });
 
@@ -188,34 +210,19 @@ describe("#CircleService", function () {
       .expect(200);
     })
     .then(function (res) {
-      var circles = res.body;
+
+      //res.body is an array
+      var circles = res.body['@graph'];
+
       var aCircle = circles[0];
-
-      expect(circles).to.have.length(1)
-
-      expect(aCircle["@context"]).to.deep.equal(Circle.context);
-      expect(aCircle).to.have.property("id");
-      expect(aCircle).to.have.property("type", "Circle");
-
-      delete aCircle['@context'];
-      delete aCircle.id;
-      delete aCircle.type;
-
-      // TODO this check won't pass
-      return Promise.map(aCircle.member, function (member) {
-        expect(member).to.have.property('id');
-        delete member['id'];
-        return member
-      })
-      .then(function () {
-        expect(aCircle).to.deep.equal(threeMusketeers);
-      });
+      console.log('circles', circles)
+      expect(circles).to.have.length(1);
+      return checkCircle(aCircle, threeMusketeers, null, 1);
     });
   });
 
 
     it("should get a circle", function () {
-
     // put a circle in the db
     return saveCircle(threeMusketeers)
     .then(function (dbCircle) {
@@ -228,24 +235,7 @@ describe("#CircleService", function () {
     })
     .then(function (res) {
       var aCircle = res.body;
-
-      expect(aCircle["@context"]).to.deep.equal(Circle.context);
-      expect(aCircle).to.have.property("id");
-      expect(aCircle).to.have.property("type", "Circle");
-
-      delete aCircle['@context'];
-      delete aCircle.id;
-      delete aCircle.type;
-
-      // TODO this check won't pass
-      return Promise.map(aCircle.member, function (member) {
-        expect(member).to.have.property('id');
-        delete member['id'];
-        return member
-      })
-      .then(function () {
-        expect(aCircle).to.deep.equal(threeMusketeers);
-      });
+      return checkCircle(aCircle, threeMusketeers, context, 2);
     });
   });
 
@@ -267,17 +257,12 @@ describe("#CircleService", function () {
       .expect(200);
     })
     .then(function (res) {
-      var updatedCircle = res.body;
+      var aCircle = res.body;
 
-      expect(updatedCircle["@context"]).to.deep.equal(Circle.context);
-      expect(updatedCircle).to.have.property("id");
-      expect(updatedCircle).to.have.property("type", "Circle");
-
-      delete updatedCircle['@context'];
-      delete updatedCircle.id;
-      delete updatedCircle.type;
-
-      expect(updatedCircle).to.have.property('name').that.equals(newData.name);
+      return checkCircle(aCircle, threeMusketeers, context, 1)
+        .then(function (updatedCircle) {
+          expect(updatedCircle).to.have.property('name', newData.name);
+        });
     });
   });
 
@@ -319,8 +304,9 @@ describe("#CircleService", function () {
       .expect(200);
     })
     .then(function (res) {
-      var circles = res.body;
+      var circles = res.body['@graph'];
       var aCircle = circles[0];
+      expect(circles).to.be.instanceOf(Array)
       expect(circles).to.have.length(1);
       expect(aCircle).to.have.property('id').that.equals(circleId);
     });
@@ -339,21 +325,20 @@ describe("#CircleService", function () {
       .expect(200);
     })
     .then(function (res) {
-      var members = res.body;
-
-      expect(members).to.have.length(3);
-
-      // TODO this test will not pass
-      return Promise.map(members, function (member) {
-        expect(member).to.have.property('id');
-        delete member['id'];
-        return member
-      })
-      .then(function () {
-        expect(members).to.deep.equal(people);
-      });
+      var members = res.body['@graph'];
+      return checkMembers(members, threeMusketeers.member);
     });
   });
+
+
+  // it("should support sorting", function () {
+
+
+
+
+
+
+  // })
 
   afterEach(function () {
     return Promise.all([

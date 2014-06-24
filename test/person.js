@@ -12,6 +12,7 @@ require('longjohn');
 describe("#PersonService", function () {
   var app, db;
   var Person;
+  var bob, athos, aramis, porthos;
 
   before(function () {
     db = level('testdb', { encoding: 'json' });
@@ -20,6 +21,26 @@ describe("#PersonService", function () {
       db: db,
     });
     Person = Promise.promisifyAll(Person);
+
+    bob = {
+      name: "Bob Loblaw",
+      email: "bobloblawslawblog.com",
+    };
+
+    aramis = {
+      name: "Aramis",
+      email: "aramis@3muskeeters.com"
+    };
+
+    athos = {
+      name: "Athos",
+      email: "athos@3muskeeters.com"
+    };
+
+    porthos = {
+      name: "Porthos",
+      email: "porthos$3muskeeters.com"
+    };
 
     app = feathers()
       .configure(feathers.rest())
@@ -33,14 +54,10 @@ describe("#PersonService", function () {
   });
 
   it("should create Person", function () {
-    var person = {
-      name: "Bob Loblaw",
-      email: "bobloblawslawblog.com",
-    };
 
     return request
     .post("/people")
-    .send(person)
+    .send(bob)
     .expect("Content-Type", /json/)
     .expect(201)
     .then(function (res) {
@@ -54,18 +71,13 @@ describe("#PersonService", function () {
       delete aPerson.id;
       delete aPerson.type;
 
-      expect(aPerson).to.deep.equal(person);
+      expect(aPerson).to.deep.equal(bob);
     });
   });
 
   it("should get all Persons", function () {
 
-    var person = {
-      name: "Bob Loblaw",
-      email: "bobloblawslawblog.com",
-    };
-
-    var stooge = Promise.promisifyAll(Person.create(person));
+    var stooge = Promise.promisifyAll(Person.create(bob));
 
     return stooge.saveAsync()
     .then(function () {
@@ -82,12 +94,7 @@ describe("#PersonService", function () {
 
   it("should get a person", function () {
 
-    var person = {
-      name: "Bob Loblaw",
-      email: "bobloblawslawblog.com",
-    };
-
-    var stooge = Promise.promisifyAll(Person.create(person));
+    var stooge = Promise.promisifyAll(Person.create(bob));
 
     stooge.saveAsync()
     .then(function () {
@@ -106,23 +113,18 @@ describe("#PersonService", function () {
       delete thePerson.id;
       delete thePerson.type;
 
-      expect(thePerson).to.deep.equal(person);
+      expect(thePerson).to.deep.equal(bob);
     });
   });
 
   it("should update a person", function () {
-
-    var person = {
-      name: "Bob Loblaw",
-      email: "bobloblawslawblog.com",
-    };
 
     var newData = {
       name: "Bob Loblaw",
       email: "bobsnewemail@email.com",
     };
 
-    var stooge = Promise.promisifyAll(Person.create(person));
+    var stooge = Promise.promisifyAll(Person.create(bob));
 
     return stooge.saveAsync()
     .then(function () {
@@ -148,26 +150,30 @@ describe("#PersonService", function () {
 
   it("should delete a person", function () {
 
-    var person = {
-      name: "Bob Loblaw",
-      email: "bobloblawslawblog.com",
-    }; 
-
-    var stooge = Promise.promisifyAll(Person.create(person));
+    var stooge = Promise.promisifyAll(Person.create(bob));
     return stooge.saveAsync()
     .then(function () {
-      // delete person with API
+      // delete bob with API
       return request
       .delete("/people/" + stooge.key)
       .expect(204)
     })
     .then(function (res) {
-      // get deleted person
+      // get deleted bob
       var get = Person.getAsync(stooge.key);
       // TODO fix
       //expect(get).to.be.rejectedWith(errors.NotFound);
     });
   });
+
+  it("should batch create people", function () {
+
+
+
+
+
+
+  })
 
   afterEach(function (done) {
     db.createKeyStream()
