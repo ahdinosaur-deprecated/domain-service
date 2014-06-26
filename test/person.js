@@ -5,7 +5,7 @@ var request = require('supertest-as-promised');
 var Promise = require('bluebird');
 var feathers = require('feathers');
 var errors = feathers.errors.types;
-var level = require('level-test')();
+var DB = require('dbjs');
 var _ = require('lodash');
 require('longjohn');
 
@@ -15,9 +15,9 @@ describe("#PersonService", function () {
   var bob, athos, aramis, porthos;
 
   before(function () {
-    db = level('testdb', { encoding: 'json' });
+    db = DB();
 
-    Person = require('open-app-person-domain')({
+    Person = require('open-app-person-db')({
       db: db,
     });
     Person = Promise.promisifyAll(Person);
