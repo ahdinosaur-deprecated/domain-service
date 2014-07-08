@@ -3,9 +3,8 @@ chai.use(require('chai-as-promised'));
 var expect = chai.expect;
 var request = require('supertest-as-promised');
 var Promise = require('bluebird');
-var feathers = require('feathers');
-var errors = feathers.errors.types;
-var DB = require('dbjs');
+var express = require('express');
+var liveDbMongo = require('livedb-mongo');
 var _ = require('lodash');
 require('longjohn');
 
@@ -15,12 +14,8 @@ describe("#PersonService", function () {
   var bob, athos, aramis, porthos;
 
   before(function () {
-    db = DB();
-
-    Person = require('open-app-person-db')({
-      db: db,
-    });
-    Person = Promise.promisifyAll(Person);
+    var mongoUrl = 'mongodb://localhost:27017/database?auto_reconnect';
+    var db = liveDbMongo(mongoUrl, { safe: true });
 
     bob = {
       name: "Bob Loblaw",
@@ -42,12 +37,9 @@ describe("#PersonService", function () {
       email: "porthos$3muskeeters.com"
     };
 
-    app = feathers()
-      .configure(feathers.rest())
-      .configure(require('../')())
-      .use(require('body-parser')())
-      .domain(Person)
-      .setup()
+    app = express()
+      .use(require('body-parser'))
+      .use(require('../')({ db: db }))
     ;
 
     request = request(app);
